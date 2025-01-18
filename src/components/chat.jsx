@@ -12,7 +12,7 @@ const ChatComponent = ({senderId ,receiverId}) => {
     if (!receiverId) return; // Only connect if receiverId is set
     console.log("=========>"+1);
     
-    const socket = new SockJS("wss://localhost:8080/ws");
+    const socket = new SockJS("https://localhost:8080/ws");
     console.log("=========>"+2);
     const stompClient = new Client({
       webSocketFactory: () => socket,
