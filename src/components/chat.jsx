@@ -7,10 +7,10 @@ const ChatComponent = ({senderId ,receiverId}) => {
   const [connected, setConnected] = useState(false);
   const [message, setMessage] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
-  // const [receiver,setReceiver] = useState();
+
   useEffect(() => {
     if (!receiverId) return; // Only connect if receiverId is set
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS("https://localhost:8080/ws");
     const stompClient = new Client({
       webSocketFactory: () => socket,
       debug: (str) => console.log(str),
