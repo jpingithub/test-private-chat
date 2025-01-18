@@ -10,13 +10,16 @@ const ChatComponent = ({senderId ,receiverId}) => {
 
   useEffect(() => {
     if (!receiverId) return; // Only connect if receiverId is set
+    console.log("=========>"+1);
+    
     const socket = new SockJS("https://localhost:8080/ws");
+    console.log("=========>"+2);
     const stompClient = new Client({
       webSocketFactory: () => socket,
       debug: (str) => console.log(str),
       reconnectDelay: 5000,
     });
-
+    console.log("=========>"+3);
     stompClient.onConnect = () => {
       console.log("Connected to WebSocket");
       setConnected(true);
