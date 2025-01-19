@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 
 const ChatComponent = ({ senderId, receiverId }) => {
   const [client, setClient] = useState(null);
@@ -10,12 +9,13 @@ const ChatComponent = ({ senderId, receiverId }) => {
 
   useEffect(() => {
     if (!receiverId) return; // Only connect if receiverId is set
-    const socket = new SockJS("http://localhost:8080/ws");
+
     const stompClient = new Client({
-      webSocketFactory: () => socket,
-      debug: (str) => console.log(str),
-      reconnectDelay: 5000,
+      webSocketFactory: () => new WebSocket("ws://localhost:8080/ws"), // Connect directly
+      debug: (str) => console.log(str), // Enable debugging
+      reconnectDelay: 5000, // Reconnect every 5 seconds if disconnected
     });
+
     stompClient.onConnect = () => {
       console.log("Connected to WebSocket");
       setConnected(true);
@@ -43,13 +43,13 @@ const ChatComponent = ({ senderId, receiverId }) => {
     return () => {
       if (stompClient) stompClient.deactivate();
     };
-  }, [senderId, receiverId]); // Reconnect whenever receiverId changes
+  }, [senderId, receiverId]); // Reconnect whenever senderId or receiverId changes
 
   const sendMessage = () => {
     if (client && connected) {
       client.publish({
         destination: `/app/send/${senderId}/${receiverId}`, // Dynamic destination
-        body: message,
+        body: message, // Send message as JSON
       });
       setMessage("");
     } else {
