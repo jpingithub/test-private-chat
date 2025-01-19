@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
-const ChatComponent = ({senderId ,receiverId}) => {
+const ChatComponent = ({ senderId, receiverId }) => {
   const [client, setClient] = useState(null);
   const [connected, setConnected] = useState(false);
   const [message, setMessage] = useState("");
@@ -9,25 +10,20 @@ const ChatComponent = ({senderId ,receiverId}) => {
 
   useEffect(() => {
     if (!receiverId) return; // Only connect if receiverId is set
-    console.log("=========>"+1);
-    
-    const socket = new WebSocket("ws://localhost:8080/ws");
-    console.log("=========>"+2);
+    const socket = new SockJS("http://localhost:8080/ws");
     const stompClient = new Client({
       webSocketFactory: () => socket,
       debug: (str) => console.log(str),
       reconnectDelay: 5000,
     });
-    console.log("=========>"+3);
     stompClient.onConnect = () => {
       console.log("Connected to WebSocket");
       setConnected(true);
 
       // Subscribe to the dynamic topic
-
-      const pathVar = senderId<receiverId?receiverId+"-"+receiverId:receiverId+"-"+senderId
+      const pathVar = senderId < receiverId ? `${senderId}-${receiverId}` : `${receiverId}-${senderId}`;
       stompClient.subscribe(`/topic/publish/${pathVar}`, (msg) => {
-        const receivedMessage = JSON.parse(msg.body); 
+        const receivedMessage = JSON.parse(msg.body);
         setChatMessages((prev) => [...prev, receivedMessage]);
       });
     };
@@ -47,7 +43,7 @@ const ChatComponent = ({senderId ,receiverId}) => {
     return () => {
       if (stompClient) stompClient.deactivate();
     };
-  }, [senderId,receiverId]); // Reconnect whenever receiverId changes
+  }, [senderId, receiverId]); // Reconnect whenever receiverId changes
 
   const sendMessage = () => {
     if (client && connected) {
@@ -67,7 +63,7 @@ const ChatComponent = ({senderId ,receiverId}) => {
       <div style={styles.chatWindow}>
         {chatMessages.map((msg, index) => (
           <div key={index} style={styles.chatMessage}>
-            {msg.content} {/* Access the content property */}
+            {msg.content}
           </div>
         ))}
       </div>
