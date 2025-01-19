@@ -8,40 +8,54 @@ const ChatComponent = ({ senderId, receiverId }) => {
   const [chatMessages, setChatMessages] = useState([]);
 
   useEffect(() => {
-    if (!receiverId) return; // Only connect if receiverId is set
-
+    if (!senderId || !receiverId) return; // Only connect if both IDs are set
+  
     const stompClient = new Client({
-      webSocketFactory: () => new WebSocket("ws://localhost:8080/ws"), // Connect directly
-      debug: (str) => console.log(str), // Enable debugging
-      reconnectDelay: 5000, // Reconnect every 5 seconds if disconnected
+      webSocketFactory: () => new WebSocket("ws://localhost:8080/ws"),
+      debug: (str) => console.log(str),
+      reconnectDelay: 5000,
     });
-
+  
     stompClient.onConnect = () => {
       console.log("Connected to WebSocket");
       setConnected(true);
-
+  
+      // Subscribe to messages sent to the receiver
       stompClient.subscribe(`/topic/publish/${receiverId}`, (msg) => {
         const receivedMessage = JSON.parse(msg.body);
-        setChatMessages((prev) => [...prev, receivedMessage]);
+        setChatMessages((prev) => [
+          ...prev,
+          { ...receivedMessage, type: "received" },
+        ]);
+      });
+  
+      // Subscribe to messages sent by the sender
+      stompClient.subscribe(`/topic/publish/${senderId}`, (msg) => {
+        const sentMessage = JSON.parse(msg.body);
+        setChatMessages((prev) => [
+          ...prev,
+          { ...sentMessage, type: "sent" },
+        ]);
       });
     };
-
+  
     stompClient.onDisconnect = () => {
       console.log("Disconnected from WebSocket");
       setConnected(false);
     };
-
+  
     stompClient.onStompError = (frame) => {
       console.error("Broker error:", frame.headers["message"]);
     };
-
+  
     stompClient.activate();
     setClient(stompClient);
-
+  
     return () => {
       if (stompClient) stompClient.deactivate();
     };
-  }, [senderId, receiverId]); // Reconnect whenever senderId or receiverId changes
+  }, [senderId, receiverId]);
+  
 
   const sendMessage = () => {
     if (client && connected) {
@@ -64,9 +78,10 @@ const ChatComponent = ({ senderId, receiverId }) => {
       <h2 style={styles.title}>Chat Application</h2>
       <div style={styles.chatWindow}>
         {chatMessages.map((msg, index) => (
-          <div key={index} style={styles.chatMessage}>
-            {msg.content}
-          </div>
+          <div key={index} style={msg.type === "sent" ? styles.sentMessage : styles.receivedMessage}>
+          <strong>{msg.type === "sent" ? "You" : "Friend"}:</strong> {msg.messageContent}
+        </div>
+        
         ))}
       </div>
       <input
@@ -123,6 +138,20 @@ const styles = {
     border: "none",
     borderRadius: "5px",
     cursor: "pointer",
+  },
+  sentMessage: {
+    padding: "5px",
+    marginBottom: "5px",
+    backgroundColor: "#d1e7dd", // Light green for sent messages
+    borderRadius: "5px",
+    textAlign: "right",
+  },
+  receivedMessage: {
+    padding: "5px",
+    marginBottom: "5px",
+    backgroundColor: "#f8d7da", // Light red for received messages
+    borderRadius: "5px",
+    textAlign: "left",
   },
 };
 
