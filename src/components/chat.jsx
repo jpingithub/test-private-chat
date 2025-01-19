@@ -79,7 +79,7 @@ const ChatComponent = ({ senderId, receiverId }) => {
       <div style={styles.chatWindow}>
         {chatMessages.map((msg, index) => (
           <div key={index} style={msg.type === "sent" ? styles.sentMessage : styles.receivedMessage}>
-          <strong>{msg.type === "sent" ? "You" : "Friend"}:</strong> {msg.messageContent}
+          <strong>{msg.type === "sent" ? "You" : "Friend"}:</strong> {msg.content}
         </div>
         
         ))}
