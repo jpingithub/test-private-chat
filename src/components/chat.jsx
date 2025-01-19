@@ -4,7 +4,7 @@ import { Client } from "@stomp/stompjs";
 const ChatComponent = ({ senderId, receiverId }) => {
   const [client, setClient] = useState(null);
   const [connected, setConnected] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
 
   useEffect(() => {
@@ -20,9 +20,7 @@ const ChatComponent = ({ senderId, receiverId }) => {
       console.log("Connected to WebSocket");
       setConnected(true);
 
-      // Subscribe to the dynamic topic
-      const pathVar = senderId < receiverId ? `${senderId}-${receiverId}` : `${receiverId}-${senderId}`;
-      stompClient.subscribe(`/topic/publish/${pathVar}`, (msg) => {
+      stompClient.subscribe(`/topic/publish/${receiverId}`, (msg) => {
         const receivedMessage = JSON.parse(msg.body);
         setChatMessages((prev) => [...prev, receivedMessage]);
       });
@@ -48,8 +46,12 @@ const ChatComponent = ({ senderId, receiverId }) => {
   const sendMessage = () => {
     if (client && connected) {
       client.publish({
-        destination: `/app/send/${senderId}/${receiverId}`, // Dynamic destination
-        body: message, // Send message as JSON
+        destination: `/app/send/`,
+        body: JSON.stringify({
+          senderId: senderId,
+          receiverId: receiverId,
+          messageContent: message,
+        }),
       });
       setMessage("");
     } else {
